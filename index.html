@@ -172,30 +172,30 @@
         /* ===== HERO ===== */
         .hero-section {
             position: relative;
-            height: 400vh; /* Scroll length for animation */
-            background: var(--charcoal);
-            margin-top: -110px; /* Pull up behind navbars */
-        }
-        .hero-sticky {
-            position: sticky;
-            top: 0;
             height: 100vh;
             height: 100svh;
-            width: 100%;
+            background: var(--charcoal);
+            margin-top: -110px; /* Pull up behind navbars */
             overflow: hidden;
             display: grid;
             grid-template-rows: 1fr auto;
         }
-        #hero-canvas {
+        #heroCarousel {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
             z-index: 0;
-            opacity: 0.85; /* Blend with overlay slightly */
+        }
+        #heroCarousel .carousel-inner,
+        #heroCarousel .carousel-item {
+            height: 100%;
+        }
+        #heroCarousel img {
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.85;
         }
         .hero-overlay {
             position: absolute;
@@ -1062,7 +1062,6 @@
             .top-bar .col-md-6:last-child { text-align: left !important; }
             .social-icons a { margin-left: 0; margin-right: 12px; }
             .section-pad { padding: 56px 0; }
-            .hero-section { min-height: auto; }
             .hero-content { padding: 88px 0 28px; }
             .hero-brand {
                 font-size: clamp(2.4rem, 12vw, 3.4rem);
@@ -1137,7 +1136,7 @@
                 max-width: 100%;
             }
             .navbar-brand { font-size: 1.35rem; }
-            .hero-section { height: 250vh; margin-top: -100px; }
+            .hero-section { margin-top: -100px; }
             
             /* Center and optimize hero text for mobile */
             .hero-content { padding: 110px 15px 30px; text-align: center; }
@@ -1249,9 +1248,26 @@
     </nav>
 
     <section class="hero-section" id="hero-scroll-section">
-        <div class="hero-sticky">
-            <canvas id="hero-canvas"></canvas>
-            <div class="hero-overlay"></div>
+        <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="3000" data-bs-pause="false">
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <img src="https://localplumbersincorona.com/wp-content/uploads/2024/02/fix-washing-machine-near-me.jpg" class="d-block w-100" alt="Repair">
+                </div>
+                <div class="carousel-item">
+                    <img src="https://azrepairing.com/wp-content/uploads/2024/01/A-and-E-Washing-Machine-Repaid.webp" class="d-block w-100" alt="Repair">
+                </div>
+                <div class="carousel-item">
+                    <img src="https://azrepairing.com/wp-content/uploads/2023/11/How-To-Repair-Washing-Machine-Control-Board.webp" class="d-block w-100" alt="Repair">
+                </div>
+                <div class="carousel-item">
+                    <img src="https://machineanswered.com/wp-content/uploads/2023/11/microwave-repair-1-1024x585.jpg" class="d-block w-100" alt="Repair">
+                </div>
+                <div class="carousel-item">
+                    <img src="https://5.imimg.com/data5/SELLER/Default/2026/2/584705248/FK/BQ/KJ/10399704/microwave-oven-repairing-services-1000x1000.jpg" class="d-block w-100" alt="Repair">
+                </div>
+            </div>
+        </div>
+        <div class="hero-overlay"></div>
         <div class="container hero-content">
             <div class="row">
                 <div class="col-lg-8 col-xl-7">
@@ -1270,7 +1286,6 @@
             <div class="hero-stat"><strong>3500+</strong><span>Appliances Repaired</span></div>
             <div class="hero-stat"><strong>2800+</strong><span>Happy Customers</span></div>
             <div class="hero-stat"><strong>10+</strong><span>Years Experience</span></div>
-        </div>
         </div>
     </section>
 
@@ -1777,96 +1792,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const canvas = document.getElementById("hero-canvas");
-        const context = canvas.getContext("2d");
-        const frameCount = 240;
-        const currentFrame = index => (
-            `washing_machine_frames_24fps/frame_${index.toString().padStart(5, '0')}.png`
-        );
 
-        const images = new Array(frameCount + 1);
-        let currentDrawnIndex = -1;
-        let currentScrollIndex = 1;
-
-        const loadFrame = (index) => {
-            if (images[index]) return Promise.resolve(images[index]);
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    images[index] = img;
-                    resolve(img);
-                };
-                img.onerror = () => resolve(null);
-                img.src = currentFrame(index);
-            });
-        };
-
-        const drawFrame = (index) => {
-            if (index === currentDrawnIndex) return;
-            
-            const img = images[index];
-            if (img && img.complete && img.naturalWidth > 0) {
-                context.drawImage(img, 0, 0);
-                currentDrawnIndex = index;
-            } else if (!img) {
-                loadFrame(index).then((loadedImg) => {
-                    if (loadedImg && currentScrollIndex === index) {
-                        context.drawImage(loadedImg, 0, 0);
-                        currentDrawnIndex = index;
-                    }
-                });
-            }
-        };
-
-        let isScrolling = false;
-        let scrollTimeout;
-
-        const preloadFrames = async () => {
-            for (let i = 2; i <= frameCount; i++) {
-                if (!images[i]) {
-                    while (isScrolling) {
-                        await new Promise(r => setTimeout(r, 100));
-                    }
-                    await loadFrame(i);
-                    // Yield to main thread to prevent UI freezing on mobile
-                    await new Promise(r => setTimeout(r, 15));
-                }
-            }
-        };
-
-        loadFrame(1).then(img => {
-            if (img) {
-                canvas.width = img.naturalWidth || 1920;
-                canvas.height = img.naturalHeight || 1080;
-                drawFrame(1);
-                setTimeout(preloadFrames, 500);
-            }
-        });
-
-        const heroSection = document.getElementById("hero-scroll-section");
-        let requestId;
-
-        window.addEventListener('scroll', () => {
-            isScrolling = true;
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => { isScrolling = false; }, 150);
-
-            if (requestId) cancelAnimationFrame(requestId);
-            requestId = requestAnimationFrame(() => {
-                if (!heroSection) return;
-                const sectionRect = heroSection.getBoundingClientRect();
-                const maxScrollTop = heroSection.offsetHeight - window.innerHeight;
-                let scrollFraction = -sectionRect.top / maxScrollTop;
-                
-                if (scrollFraction < 0) scrollFraction = 0;
-                if (scrollFraction > 1) scrollFraction = 1;
-                
-                const frameIndex = Math.min(frameCount, Math.max(1, Math.floor(scrollFraction * frameCount) + 1));
-                
-                currentScrollIndex = frameIndex;
-                drawFrame(frameIndex);
-            });
-        }, { passive: true });
 
         function animateCounters() {
             const counters = document.querySelectorAll('.counter');
